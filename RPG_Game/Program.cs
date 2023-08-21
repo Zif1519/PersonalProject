@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Text;
 using Microsoft.Office.Interop.Excel;
+using Range = Microsoft.Office.Interop.Excel.Range;
 
 namespace RPG_Game
 {
-    
-
     public enum GAME_STATUS { }
     public enum ITEM_TYPE { Weapon= 0, SubWeapon, Halmet, Armor, Gloves, Boots, Ring, Amulet, Potion, Food, }
     public enum SELECT_TYPE { Place= 0, Status, Inventory, Item, Quest,}
@@ -18,116 +17,39 @@ namespace RPG_Game
             Dictionary<String, ISelectable> myData = new Dictionary<string, ISelectable>();
             
             SetSenario(ref myData);
-            if (true)
-            {
-                //1.게임 시작 화면
-                //    -게임 시작시 간단한 소개 말과 마을에서 할 수 있는 행동을 알려줍니다.
-                //    -원하는 행동의 숫자를 타이핑하면 실행합니다. 
-                //    1 ~2 이외 입력시 -**잘못된 입력입니다** 출력
 
-                //    ```csharp
-                //    스파르타 마을에 오신 여러분 환영합니다.
-                //    이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.
-
-
-                //    1.상태 보기
-                //    2.인벤토리
-
-
-                //    원하시는 행동을 입력해주세요.
-                //    >>
-                //    ```
-
-                //-2.상태보기
-                //    - 캐릭터의 정보를 표시합니다.
-                //    -7개의 속성을 가지고 있습니다.
-                //    레벨 / 이름 / 직업 / 공격력 / 방어력 / 체력 / Gold
-                //    - 처음 기본값은 이름을 제외하고는 아래와 동일하게 만들어주세요
-                //    -이후 장착한 아이템에 따라 수치가 변경 될 수 있습니다.
-
-                //    ```csharp
-                //    ** 상태 보기**
-                //    캐릭터의 정보가 표시됩니다.
-
-
-                //    Lv. 01
-                //    Chad(전사)
-                //    공격력: 10
-                //    방어력: 5
-                //    체 력 : 100
-                //    Gold: 1500 G
-
-
-                //    0.나가기
-
-
-                //    원하시는 행동을 입력해주세요.
-                //    >>
-                //    ```
-
-                //-3.인벤토리
-                //    - 보유 중인 아이템을 전부 보여줍니다.
-                //    이때 장착중인 아이템 앞에는[E] 표시를 붙여 줍니다.
-                //    - 처음 시작시에는 2가지 아이템이 있습니다.
-
-                //    ```csharp
-                //    ** 인벤토리**
-                //    보유 중인 아이템을 관리할 수 있습니다.
-
-                //    [아이템 목록]
-                //    - [E]무쇠갑옷 | 방어력 + 5 | 무쇠로 만들어져 튼튼한 갑옷입니다.
-                //    - 낡은 검 | 공격력 + 2 | 쉽게 볼 수 있는 낡은 검 입니다.
-
-                //    1.장착 관리
-                //    0.나가기
-
-                //    원하시는 행동을 입력해주세요.
-                //    >>
-                //    ```
-
-                //    3 - 1.장착 관리
-
-                //    - 장착관리가 시작되면 아이템 목록 앞에 숫자가 표시됩니다.
-                //    -일치하는 아이템을 선택했다면(예제에서 1~2선택시)
-                //        -장착중이지 않다면 → 장착
-                //        [E] 표시 추가
-                //        -이미 장착중이라면 → 장착 해제
-                //        [E] 표시 없애기
-                //    -일치하는 아이템을 선택했지 않았다면(예제에서 1~3이외 선택시)
-                //        - **잘못된 입력입니다** 출력
-                //    -아이템의 중복 장착을 허용합니다.
-                //        - 창과 검을 동시에 장착가능
-                //        - 갑옷도 동시에 착용가능
-                //        -장착 갯수 제한 X
-
-                //    ```csharp
-                //    ** 인벤토리 -장착 관리**
-                //    보유 중인 아이템을 관리할 수 있습니다.
-
-                //    [아이템 목록]
-                //    - 1[E]무쇠갑옷 | 방어력 + 5 | 무쇠로 만들어져 튼튼한 갑옷입니다.
-                //    - 2 낡은 검         | 공격력 + 2 | 쉽게 볼 수 있는 낡은 검입니다.
-
-                //    0.나가기
-
-                //    원하시는 행동을 입력해주세요.
-                //    >>
-                //    ```
-
-                //    -아이템이 장착되었다면 1.상태보기 에 정보가 반영되어야 합니다.
-                //        -정보 반영 예제
-            }
-
-            while (true)
-            {
-
-            }
+            //while (true)
+            //{
+            //}
 
             
         }
         static void SetSenario(ref Dictionary<String, ISelectable> data)
         {
+            string filePath = "C:\\TeamSparta\\PersonalProject\\RPG_Game\\StageData.xlsx";
+            Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+            Workbook wb;
+            Worksheet ws;
+
+            wb = excel.Workbooks.Open(filePath);
+            ws = wb.Worksheets[1];
+
+            Console.WriteLine(Convert.ToString(ws.Cells[1,2].Value));
+
+            Range cell = ws.Cells[1,2];
+            Range cell2 = ws.Cells[1,3];
+            string value = cell.Value;
+
+            cell2.Value = "Wow!";
             // data.Add();
+
+            // 작업후 리소스 닫기
+            wb.SaveAs(filePath,false);
+            wb.Close();
+            excel.Quit();
+            System.Runtime.InteropServices.Marshal.ReleaseComObject(ws);
+            System.Runtime.InteropServices.Marshal.ReleaseComObject(wb);
+            System.Runtime.InteropServices.Marshal.ReleaseComObject(excel);
         }
 
         static int GetValidInput(int min, int max)
