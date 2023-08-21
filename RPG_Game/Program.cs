@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Text;
+using Microsoft.Office.Interop.Excel;
 
 namespace RPG_Game
 {
+    
+
     public enum GAME_STATUS { }
-    public enum ITEM_TYPE { Weapon = 0, SubWeapon, Halmet, Armor, Gloves, Boots, Ring, Amulet, Potion, Food, }
-    public enum SELECT_TYPE { Place = 0, Status, Inventory, Item, Quest,}
+    public enum ITEM_TYPE { Weapon= 0, SubWeapon, Halmet, Armor, Gloves, Boots, Ring, Amulet, Potion, Food, }
+    public enum SELECT_TYPE { Place= 0, Status, Inventory, Item, Quest,}
     internal class Program
     {
         static void Main(string[] args)
         {
             Displayer displayer = new Displayer();
-            Inventory inventory = new Inventory();
+            InventoryData inventory;
             Dictionary<String, ISelectable> myData = new Dictionary<string, ISelectable>();
             
             SetSenario(ref myData);
@@ -124,7 +127,7 @@ namespace RPG_Game
         }
         static void SetSenario(ref Dictionary<String, ISelectable> data)
         {
-            data.Add() 
+            // data.Add();
         }
 
         static int GetValidInput(int min, int max)
@@ -133,7 +136,7 @@ namespace RPG_Game
             {
                 Console.Write($"원하시는 행동의 번호를 입력해 주세요. : ");
                 string answer = Console.ReadLine();
-                bool isParseSuccess = int.TryParse(answer, out int result)
+                bool isParseSuccess = int.TryParse(answer, out int result);
                 if (isParseSuccess)
                 {
                     if(result >= min && result <= max) return result;
@@ -171,14 +174,14 @@ namespace RPG_Game
             Console.WriteLine("########################################\n\n");
 
             // 스테이지 설명이 있는 경우 출력.
-            if (stageData.Description != null && stageData.Description != "")
+            if (_description != null)
             {
-                Console.WriteLine(description);
+                Console.WriteLine(_description);
             }
             else { Console.WriteLine("\n\t\t  ...\t\t\n"); }
 
             // 선택지 출력
-            Console.WriteLine(_Selection);
+            Console.WriteLine(_selections);
             Console.WriteLine("\n\n");
         }
         public void UpdatePlaceData(PlaceData placeData)
@@ -187,19 +190,17 @@ namespace RPG_Game
             _title.Clear();
             _description.Clear();
             _selections.Clear();
-            _selectCount = 0;
 
             // 재설정
             _title.Append(placeData.Name);
             _description.Append(placeData.Description);
-            if{ (placeData.Selections.Count <= 0) return; }
-            else { _selectCount = placeData.Selections.Count; }
+            if (placeData.Selections.Count <= 0) return;
             for(int i =0; i< placeData.Selections.Count; i++)
             {
                 _selections.Append($"{i + 1} : ");
                 switch (placeData.Selections[i].SelectType)
                 {
-                    case : SELECT_TYPE.Place
+                    case SELECT_TYPE.Place :
                         _selections.Append($"[{placeData.Selections[i].Name}](으)로 이동.");
                         break;
                         
@@ -209,14 +210,6 @@ namespace RPG_Game
                         break;
                 }
             }
-
-            // 플레이어의 선택지인 Selections에 번호를 붙여서 표시하기
-            for (int i = 0; i < selections.Length; i++)
-            {
-                Console.WriteLine($" {i + 1} : [{selections[i].Name}](으)로 가기");
-            }
-            Console.WriteLine("\n\n");
-
             RefreshDisplay();
         }
         public void UpdateQuestData(QuestData QuestData)
@@ -247,7 +240,7 @@ namespace RPG_Game
         public string Description { get; }
         public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Quest;
         public List<ISelectable> Selections { get; }
-        public Inventory(String name, string description)
+        public QuestData(String name, string description)
         {
             Name = name;
             Description = description;
@@ -264,7 +257,7 @@ namespace RPG_Game
         public string Description { get; }
         public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Inventory;
         public List<ISelectable> Selections { get; }
-        public Inventory(String name, string description)
+        public InventoryData(String name, string description)
         {
             Name = name;
             Description = description;
@@ -281,7 +274,7 @@ namespace RPG_Game
         public string Description { get; }
         public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Status;
         public List<ISelectable> Selections { get; }
-        public Inventory(String name, string description)
+        public StatusData(String name, string description)
         {
             Name = name;
             Description = description;
@@ -298,7 +291,7 @@ namespace RPG_Game
         public string Description { get; }
         public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Item;
         public List<ISelectable> Selections { get; }
-        public Inventory(String name, string description)
+        public ItemData(String name, string description)
         {
             Name = name;
             Description = description;
