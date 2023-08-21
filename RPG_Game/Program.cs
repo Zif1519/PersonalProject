@@ -5,6 +5,7 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using RPG_Game;
+using DocumentFormat.OpenXml.Drawing;
 
 // 아래는 excel app을 작동시켜서 조작하는 방식, 엑셀의 양식을 더 많이 사용할 수는 있지만 속도나 메모리적으로 불편함이 있다.
 // using Microsoft.Office.Interop.Excel;
@@ -33,36 +34,6 @@ namespace RPG_Game
         }
         static void SetSenario(ref Dictionary<String, ISelectable> data)
         {
-
-            string filePath = "C:\\TeamSparta\\PersonalProject\\RPG_Game\\GameData4.xlsx";
-
-            // Create a new Excel package
-            using (SpreadsheetDocument spreadsheetDocument = SpreadsheetDocument.Create(filePath, SpreadsheetDocumentType.Workbook))
-            {
-                // Add a workbook part to the document
-                WorkbookPart workbookPart = spreadsheetDocument.AddWorkbookPart();
-                workbookPart.Workbook = new Workbook();
-
-                // Add a worksheet part to the workbook part
-                WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-                worksheetPart.Worksheet = new Worksheet(new SheetData());
-
-                // Add a sheets part to the workbook
-                Sheets sheets = spreadsheetDocument.WorkbookPart.Workbook.AppendChild(new Sheets());
-
-                // Add a sheet to the sheets
-                Sheet sheet = new Sheet() { Id = spreadsheetDocument.WorkbookPart.GetIdOfPart(worksheetPart), SheetId = 1, Name = "Sheet1" };
-                sheets.Append(sheet);
-
-                // Get the sheet data;
-                SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
-
-                // Add a cell to the sheet data
-                Cell cell = new Cell() { CellReference = "B2", DataType = CellValues.String, CellValue = new CellValue("Hello, Excel!") };
-                sheetData.AppendChild(cell);
-
-                spreadsheetDocument.Save();
-            }
 
             Console.WriteLine("Excel file created successfully.");
 
@@ -119,9 +90,9 @@ namespace RPG_Game
             //System.Runtime.InteropServices.Marshal.ReleaseComObject(wb);
             //System.Runtime.InteropServices.Marshal.ReleaseComObject(excel);
        
-            string filePath3 = "C:\\TeamSparta\\PersonalProject\\RPG_Game\\GameData2.xlsx";
+            string filePath3 = "C:\\TeamSparta\\PersonalProject\\RPG_Game\\GameData4.xlsx";
 
-            using (SpreadsheetDocument document = SpreadsheetDocument.Open(filePath2, false))
+            using (SpreadsheetDocument document = SpreadsheetDocument.Open(filePath3, false))
             {
                 WorkbookPart workbookPart = document.WorkbookPart;
                 WorksheetPart worksheetPart = workbookPart.WorksheetParts.FirstOrDefault();
@@ -154,6 +125,7 @@ namespace RPG_Game
         {
             string value = cell.CellValue?.InnerText;
 
+            // 셀의 값이 공유문자열인 경우에는 숫자로 저장되며, 이는 공유문자열테이블에서 찾아와야함. 
             if (cell.DataType != null && cell.DataType == CellValues.SharedString)
             {
                 SharedStringTablePart sharedStringPart = workbookPart.GetPartsOfType<SharedStringTablePart>().FirstOrDefault();
