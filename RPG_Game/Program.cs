@@ -52,30 +52,21 @@ namespace RPG_Game
 
                 SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
 
+                bool isFirstRow = true;
                 foreach (Row row in sheetData.Elements<Row>())
                 {
-                    //foreach (Cell cell in row.Elements<Cell>())
-                    //{
-                    //    Console.Write(GetCellValue(cell, workbookPart) + "\t");
-                    //}
-                    //Console.WriteLine();
-                    int num_id; 
-                    int.TryParse(row.ElementAt(0).ToString(), out num_id);
-                    if (num_id < 2000)
+                    if (!isFirstRow) // 첫 번째 행이 아닌 경우에만 처리
                     {
-                        PlaceData inputdata = new PlaceData(row.ElementAt(0).ToString(), row.ElementAt(1).ToString(), row.ElementAt(2).ToString());
-                        data.Add(inputdata.PlaceID, inputdata);
-                    } else if (num_id < 3000)
-                    {
-                        //
+                        foreach (Cell cell in row.Elements<Cell>())
+                        {
+                            Console.Write(GetCellValue(cell, workbookPart) + "\t");
+                        }
+                        Console.WriteLine();
                     }
-
-
+                    isFirstRow = false; // 첫 번째 행 처리 후 더 이상 isFirstRow는 true가 아님
                 }
                 document.Dispose();
             }
-
-            return;
         }
 
 
