@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using System.Linq;
 using DocumentFormat.OpenXml;
@@ -22,7 +23,7 @@ namespace RPG_Game
         {
             Displayer displayer = new Displayer();
             InventoryData inventory;
-            Dictionary<String, ISelectable> myData = new Dictionary<string, ISelectable>();
+            Dictionary<int, ISelectable> myData = new Dictionary<int, ISelectable>();
 
             SetSenario(ref myData);
 
@@ -32,67 +33,14 @@ namespace RPG_Game
 
 
         }
-        static void SetSenario(ref Dictionary<String, ISelectable> data)
+        static void SetSenario(ref Dictionary<int, ISelectable> data)
         {
 
-            Console.WriteLine("Excel file created successfully.");
+            string projectFolder = AppDomain.CurrentDomain.BaseDirectory;
+            string fileName = "PlaceData.xlsx";
+            string filePath = projectFolder + "..\\"+"..\\"+"..\\"+fileName;
 
-            string filePath2 = "C:\\TeamSparta\\PersonalProject\\RPG_Game\\GameData2.xlsx";
-
-            using (SpreadsheetDocument document = SpreadsheetDocument.Create(filePath2, SpreadsheetDocumentType.Workbook))
-            {
-                WorkbookPart workbookPart = document.AddWorkbookPart();
-                workbookPart.Workbook = new Workbook();
-
-                WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-                worksheetPart.Worksheet = new Worksheet(new SheetData());
-
-                Sheets sheets = workbookPart.Workbook.AppendChild(new Sheets());
-
-                Sheet sheet = new Sheet()
-                {
-                    Id = workbookPart.GetIdOfPart(worksheetPart),
-                    SheetId = 2,
-                    Name = "Sheet2"
-                };
-                sheets.Append(sheet);
-
-                WorksheetWriter writer = new WorksheetWriter(worksheetPart);
-                writer.AppendRow(new string[] { "Hello", "World", "엑셀저장 테스트" });
-
-                workbookPart.Workbook.Save();
-                document.Dispose();
-            }
-
-            Console.WriteLine("Excel file created!");
-
-
-
-
-            // 아래 방법은 excel app을 이용한 조작방법인데, 속도나 메모리적으로 안좋아보임.
-            //string filePath = "C:\\TeamSparta\\PersonalProject\\RPG_Game\\StageData.xlsx";
-            //Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
-            //Workbook wb;
-            //Worksheet ws;
-            //wb = excel.Workbooks.Open(filePath);
-            //ws = wb.Worksheets[1];
-            //Console.WriteLine(Convert.ToString(ws.Cells[1,2].Value));
-            //Range cell = ws.Cells[1,2];
-            //Range cell2 = ws.Cells[1,3];
-            //string value = cell.Value;
-            //cell2.Value = "Wow!";
-            //// data.Add();
-            //// 작업후 리소스 닫기
-            //wb.SaveAs(filePath,false);
-            //wb.Close();
-            //excel.Quit();
-            //System.Runtime.InteropServices.Marshal.ReleaseComObject(ws);
-            //System.Runtime.InteropServices.Marshal.ReleaseComObject(wb);
-            //System.Runtime.InteropServices.Marshal.ReleaseComObject(excel);
-       
-            string filePath3 = "C:\\TeamSparta\\PersonalProject\\RPG_Game\\GameData4.xlsx";
-
-            using (SpreadsheetDocument document = SpreadsheetDocument.Open(filePath3, false))
+            using (SpreadsheetDocument document = SpreadsheetDocument.Open(filePath, false))
             {
                 WorkbookPart workbookPart = document.WorkbookPart;
                 WorksheetPart worksheetPart = workbookPart.WorksheetParts.FirstOrDefault();
@@ -106,11 +54,22 @@ namespace RPG_Game
 
                 foreach (Row row in sheetData.Elements<Row>())
                 {
-                    foreach (Cell cell in row.Elements<Cell>())
+                    //foreach (Cell cell in row.Elements<Cell>())
+                    //{
+                    //    Console.Write(GetCellValue(cell, workbookPart) + "\t");
+                    //}
+                    //Console.WriteLine();
+                    int num_id; 
+                    int.TryParse(row.ElementAt(0).ToString(), out num_id);
+                    if (num_id < 2000)
                     {
-                        Console.Write(GetCellValue(cell, workbookPart) + "\t");
+                        PlaceData inputdata = new PlaceData(row.ElementAt(0).ToString(), row.ElementAt(1).ToString(), row.ElementAt(2).ToString());
+                        data.Add(inputdata.PlaceID, inputdata);
+                    } else if (num_id < 3000)
+                    {
+                        //
                     }
-                    Console.WriteLine();
+
 
                 }
                 document.Dispose();
@@ -262,12 +221,14 @@ public class Displayer
 }
 public class PlaceData : ISelectable
 {
+    public int PlaceID { get; }
     public string Name { get; }
     public string Description { get; }
     public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Place;
     public List<ISelectable> Selections { get; }
-    public PlaceData(string name, string description)
+    public PlaceData(string id, string name, string description)
     {
+        PlaceID = int.Parse(id);
         Name = name;
         Description = description;
         Selections = new List<ISelectable>();
