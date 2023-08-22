@@ -1,247 +1,324 @@
 ﻿using System;
+using System.IO;
 using System.Text;
+using System.Linq;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+using RPG_Game;
+using DocumentFormat.OpenXml.Drawing;
+
+// 아래는 excel app을 작동시켜서 조작하는 방식, 엑셀의 양식을 더 많이 사용할 수는 있지만 속도나 메모리적으로 불편함이 있다.
+// using Microsoft.Office.Interop.Excel;
+// using Range = Microsoft.Office.Interop.Excel.Range;
 
 namespace RPG_Game
 {
-    public enum ItemType { Weapon = 0, SubWeapon, Halmet, Armor, Gloves, Boots, Ring, Amulet, Potion, Food}
-
+    public enum GAME_STATUS { }
+    public enum ITEM_TYPE { Weapon = 0, SubWeapon, Halmet, Armor, Gloves, Boots, Ring, Amulet, Potion, Food, }
+    public enum SELECT_TYPE { Place = 0, Status, Inventory, Item, Quest, }
     internal class Program
     {
         static void Main(string[] args)
         {
-            SetSenario();
-            if (true)
-            {
-                //1.게임 시작 화면
-                //    -게임 시작시 간단한 소개 말과 마을에서 할 수 있는 행동을 알려줍니다.
-                //    -원하는 행동의 숫자를 타이핑하면 실행합니다. 
-                //    1 ~2 이외 입력시 -**잘못된 입력입니다** 출력
+            Displayer displayer = new Displayer();
+            InventoryData inventory;
+            Dictionary<int, ISelectable> myData = new Dictionary<int, ISelectable>();
 
-                //    ```csharp
-                //    스파르타 마을에 오신 여러분 환영합니다.
-                //    이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.
+            SetSenario(ref myData);
+
+            //while (true)
+            //{
+            //}
 
 
-                //    1.상태 보기
-                //    2.인벤토리
-
-
-                //    원하시는 행동을 입력해주세요.
-                //    >>
-                //    ```
-
-                //-2.상태보기
-                //    - 캐릭터의 정보를 표시합니다.
-                //    -7개의 속성을 가지고 있습니다.
-                //    레벨 / 이름 / 직업 / 공격력 / 방어력 / 체력 / Gold
-                //    - 처음 기본값은 이름을 제외하고는 아래와 동일하게 만들어주세요
-                //    -이후 장착한 아이템에 따라 수치가 변경 될 수 있습니다.
-
-                //    ```csharp
-                //    ** 상태 보기**
-                //    캐릭터의 정보가 표시됩니다.
-
-
-                //    Lv. 01
-                //    Chad(전사)
-                //    공격력: 10
-                //    방어력: 5
-                //    체 력 : 100
-                //    Gold: 1500 G
-
-
-                //    0.나가기
-
-
-                //    원하시는 행동을 입력해주세요.
-                //    >>
-                //    ```
-
-                //-3.인벤토리
-                //    - 보유 중인 아이템을 전부 보여줍니다.
-                //    이때 장착중인 아이템 앞에는[E] 표시를 붙여 줍니다.
-                //    - 처음 시작시에는 2가지 아이템이 있습니다.
-
-                //    ```csharp
-                //    ** 인벤토리**
-                //    보유 중인 아이템을 관리할 수 있습니다.
-
-                //    [아이템 목록]
-                //    - [E]무쇠갑옷 | 방어력 + 5 | 무쇠로 만들어져 튼튼한 갑옷입니다.
-                //    - 낡은 검 | 공격력 + 2 | 쉽게 볼 수 있는 낡은 검 입니다.
-
-                //    1.장착 관리
-                //    0.나가기
-
-                //    원하시는 행동을 입력해주세요.
-                //    >>
-                //    ```
-
-                //    3 - 1.장착 관리
-
-                //    - 장착관리가 시작되면 아이템 목록 앞에 숫자가 표시됩니다.
-                //    -일치하는 아이템을 선택했다면(예제에서 1~2선택시)
-                //        -장착중이지 않다면 → 장착
-                //        [E] 표시 추가
-                //        -이미 장착중이라면 → 장착 해제
-                //        [E] 표시 없애기
-                //    -일치하는 아이템을 선택했지 않았다면(예제에서 1~3이외 선택시)
-                //        - **잘못된 입력입니다** 출력
-                //    -아이템의 중복 장착을 허용합니다.
-                //        - 창과 검을 동시에 장착가능
-                //        - 갑옷도 동시에 착용가능
-                //        -장착 갯수 제한 X
-
-                //    ```csharp
-                //    ** 인벤토리 -장착 관리**
-                //    보유 중인 아이템을 관리할 수 있습니다.
-
-                //    [아이템 목록]
-                //    - 1[E]무쇠갑옷 | 방어력 + 5 | 무쇠로 만들어져 튼튼한 갑옷입니다.
-                //    - 2 낡은 검         | 공격력 + 2 | 쉽게 볼 수 있는 낡은 검입니다.
-
-                //    0.나가기
-
-                //    원하시는 행동을 입력해주세요.
-                //    >>
-                //    ```
-
-                //    -아이템이 장착되었다면 1.상태보기 에 정보가 반영되어야 합니다.
-                //        -정보 반영 예제
-            }
         }
-
-        static void SetSenario()
+        static void SetSenario(ref Dictionary<int, ISelectable> data)
         {
-            // 캐릭터 생성 및 초기화 등
 
-            // 스테이지 생성 및 초기화 등
+            string projectFolder = AppDomain.CurrentDomain.BaseDirectory;
+            string fileName = "PlaceData.xlsx";
+            string filePath = projectFolder + "..\\"+"..\\"+"..\\"+fileName;
 
-            // 첫 화면 로드
-        }
-
-        static void DisplayView()
-        {
-            
-        }
-
-        static void LoadStageView()
-        {
-            StringBuilder title = stage.Name;
-            StringBuilder description = stage.Description;
-            Stage[] selections = stage.Selections;
-
-
-            // 콘솔창 지우기
-            Console.Clear();
-
-            // 콘솔에 스테이지 Title을 표시하기
-            Console.WriteLine("########################################");
-            Console.WriteLine($"          {title}          ");
-            Console.WriteLine("########################################\n\n\n");
-
-            // 스테이지 설명이 있는 경우 출력.
-            if (description != null)
+            using (SpreadsheetDocument document = SpreadsheetDocument.Open(filePath, false))
             {
-                Console.WriteLine(description);
-            }
+                WorkbookPart workbookPart = document.WorkbookPart;
+                WorksheetPart worksheetPart = workbookPart.WorksheetParts.FirstOrDefault();
 
-            // 플레이어의 선택지인 Selections에 번호를 붙여서 표시하기
-            for (int i = 0; i < selections.Length; i++)
-            {
-                Console.WriteLine($" {i + 1} : [{selections[i].Name}](으)로 가기");
-            }
-
-            Console.WriteLine("\n\n");
-
-            // 플레이어의 행동을 입력받는다. 행동의 번호 외의 숫자가 입력된 경우에는 다시 입력을 받는다.
-            bool isCorrectInput = false;
-            while (!isCorrectInput)
-            {
-                try
+                if (worksheetPart == null)
                 {
-                    Console.Write($"원하시는 행동의 번호를 입력해 주세요. (1~{selections.Length}) : ");
-                    int answer = int.Parse(Console.ReadLine());
-                    if (answer < 1 || answer > selections.Length)
+                    return; 
+                }
+
+                SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
+
+                bool isFirstRow = true;
+                foreach (Row row in sheetData.Elements<Row>())
+                {
+                    if (!isFirstRow) // 첫 번째 행이 아닌 경우에만 처리
                     {
-                        LoadStage(stage.Selections[answer - 1]);
+                        foreach (Cell cell in row.Elements<Cell>())
+                        {
+                            Console.Write(GetCellValue(cell, workbookPart) + "\t");
+                        }
+                        Console.WriteLine();
                     }
+                    isFirstRow = false; // 첫 번째 행 처리 후 더 이상 isFirstRow는 true가 아님
                 }
-                catch (Exception e)
+                document.Dispose();
+            }
+        }
+
+
+
+        private static string GetCellValue(Cell cell, WorkbookPart workbookPart)
+        {
+            string value = cell.CellValue?.InnerText;
+
+            // 셀의 값이 공유문자열인 경우에는 숫자로 저장되며, 이는 공유문자열테이블에서 찾아와야함. 
+            if (cell.DataType != null && cell.DataType == CellValues.SharedString)
+            {
+                SharedStringTablePart sharedStringPart = workbookPart.GetPartsOfType<SharedStringTablePart>().FirstOrDefault();
+                if (sharedStringPart != null)
                 {
-                    Console.WriteLine($"입력이 올바르지 않습니다. Exception : {e}");
+                    value = sharedStringPart.SharedStringTable.ChildElements[Int32.Parse(value)].InnerText;
+                }
+            }
+
+            return value;
+        }
+        static int IsValidInput(int min, int max)
+        {
+            while (true)
+            {
+                Console.Write($"원하시는 행동의 번호를 입력해 주세요. : ");
+                string answer = Console.ReadLine();
+                bool isParseSuccess = int.TryParse(answer, out int result);
+                if (isParseSuccess)
+                {
+                    if (result >= min && result <= max) return result;
                 }
             }
         }
-        
-        static void LoadInventoryView()
-        {
+    }
 
+
+
+
+
+    class WorksheetWriter
+    {
+        private WorksheetPart _worksheetPart;
+        private SheetData _sheetData;
+
+        public WorksheetWriter(WorksheetPart worksheetPart)
+        {
+            _worksheetPart = worksheetPart ?? throw new ArgumentNullException(nameof(worksheetPart));
+            _sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
         }
 
-        static void LoadStatusView()
+        public void AppendRow(params string[] values)
         {
-
+            Row row = new Row();
+            foreach (var value in values)
+            {
+                Cell cell = new Cell
+                {
+                    DataType = CellValues.String,
+                    CellValue = new CellValue(value)
+                };
+                row.AppendChild(cell);
+            }
+            _sheetData.AppendChild(row);
         }
     }
 
-    public interface ISelectable
+
+
+
+}
+
+public interface ISelectable
+{
+    string Name { get; }
+    string Description { get; }
+    public SELECT_TYPE SelectType { get; }
+    public List<ISelectable> Selections { get; }
+    public void AddSelection(ISelectable selection)
     {
-        StringBuilder Name { get; }
-        void OnSelected();
+        Selections.Add(selection);
     }
+}
 
-    public abstract class Stage : ISelectable
+public class Displayer
+{
+    StringBuilder _title;
+    StringBuilder _description;
+    StringBuilder _selections;
+
+    public void RefreshDisplay()
     {
-        public StringBuilder Name { get;}
-        public StringBuilder Description { get;}
-        public List<ISelectable> Selections { get;}
-        public Stage(StringBuilder name, StringBuilder description)
-        {
-            Name = name;
-            Description = description;
-            Selections = new List<ISelectable>();
-        }
+        // 콘솔창 지우기
+        Console.Clear();
 
-        public void AddSelection(ISelectable selection)
+        // 콘솔에 스테이지 Title을 표시하기
+        Console.WriteLine("########################################");
+        Console.WriteLine($"          {_title}          ");
+        Console.WriteLine("########################################\n\n");
+
+        // 스테이지 설명이 있는 경우 출력.
+        if (_description != null)
         {
-            Selections.Add(selection);
+            Console.WriteLine(_description);
         }
-        public void OnSelected()
-        {
-           
-        }
+        else { Console.WriteLine("\n\t\t  ...\t\t\n"); }
+
+        // 선택지 출력
+        Console.WriteLine(_selections);
+        Console.WriteLine("\n\n");
     }
-
-    public class Character
+    public void UpdatePlaceData(PlaceData placeData)
     {
-        public string Name { get; }
-        public string Job { get; }
-        public int Level { get; }
-        public int Atk { get; }
-        public int Def { get; }
-        public int MaxHp { get; }
-        public int CurHp { get; }
-        public int Gold { get; }
+        // PlaceData가 들어오면 모든 정보 초기화 
+        _title.Clear();
+        _description.Clear();
+        _selections.Clear();
 
-        public Character(string name, string job, int level, int atk, int def, int maxhp, int gold)
+        // 재설정
+        _title.Append(placeData.Name);
+        _description.Append(placeData.Description);
+        if (placeData.Selections.Count <= 0) return;
+        for (int i = 0; i < placeData.Selections.Count; i++)
         {
-            Name = name;
-            Job = job;
-            Level = level;
-            Atk = atk;
-            Def = def;
-            MaxHp = maxhp;
-            CurHp = maxhp;
-            Gold = gold;
-        }
-    }
+            _selections.Append($"{i + 1} : ");
+            switch (placeData.Selections[i].SelectType)
+            {
+                case SELECT_TYPE.Place:
+                    _selections.Append($"[{placeData.Selections[i].Name}](으)로 이동.");
+                    break;
 
-    public class Item : ISelectable
+                // 퀘스트나 아이템의 경우 추가로 구현
+
+                default:
+                    break;
+            }
+        }
+        RefreshDisplay();
+    }
+    public void UpdateQuestData(QuestData QuestData)
     {
-        public StringBuilder Name { get;}
-        public StringBuilder Description { get;} 
-        public ItemType Type { get; }
-        public int Price { get;}
+        RefreshDisplay();
+    }
+}
+public class PlaceData : ISelectable
+{
+    public int PlaceID { get; }
+    public string Name { get; }
+    public string Description { get; }
+    public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Place;
+    public List<ISelectable> Selections { get; }
+    public PlaceData(string id, string name, string description)
+    {
+        PlaceID = int.Parse(id);
+        Name = name;
+        Description = description;
+        Selections = new List<ISelectable>();
+    }
+    public void AddSelection(ISelectable selection)
+    {
+        Selections.Add(selection);
+    }
+}
+public class QuestData
+{
+    public string Name { get; }
+    public string Description { get; }
+    public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Quest;
+    public List<ISelectable> Selections { get; }
+    public QuestData(String name, string description)
+    {
+        Name = name;
+        Description = description;
+        Selections = new List<ISelectable>();
+    }
+    public void AddSelection(ISelectable selection)
+    {
+        Selections.Add(selection);
+    }
+}
+public class InventoryData : ISelectable
+{
+    public string Name { get; }
+    public string Description { get; }
+    public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Inventory;
+    public List<ISelectable> Selections { get; }
+    public InventoryData(String name, string description)
+    {
+        Name = name;
+        Description = description;
+        Selections = new List<ISelectable>();
+    }
+    public void AddSelection(ISelectable selection)
+    {
+        Selections.Add(selection);
+    }
+}
+public class StatusData
+{
+    public string Name { get; }
+    public string Description { get; }
+    public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Status;
+    public List<ISelectable> Selections { get; }
+    public StatusData(String name, string description)
+    {
+        Name = name;
+        Description = description;
+        Selections = new List<ISelectable>();
+    }
+    public void AddSelection(ISelectable selection)
+    {
+        Selections.Add(selection);
+    }
+}
+public class ItemData : ISelectable
+{
+    public string Name { get; }
+    public string Description { get; }
+    public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Item;
+    public List<ISelectable> Selections { get; }
+    public ItemData(String name, string description)
+    {
+        Name = name;
+        Description = description;
+        Selections = new List<ISelectable>();
+    }
+    public void AddSelection(ISelectable selection)
+    {
+        Selections.Add(selection);
+    }
+}
+
+
+public class Character
+{
+    public string Name { get; }
+    public string Job { get; }
+    public int Level { get; }
+    public int Atk { get; }
+    public int Def { get; }
+    public int MaxHp { get; }
+    public int CurHp { get; }
+    public int Gold { get; }
+
+    public Character(string name, string job, int level, int atk, int def, int maxhp, int gold)
+    {
+        Name = name;
+        Job = job;
+        Level = level;
+        Atk = atk;
+        Def = def;
+        MaxHp = maxhp;
+        CurHp = maxhp;
+        Gold = gold;
     }
 }
