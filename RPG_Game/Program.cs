@@ -7,6 +7,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using RPG_Game;
 using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.Office2010.Excel;
 
 // 아래는 excel app을 작동시켜서 조작하는 방식, 엑셀의 양식을 더 많이 사용할 수는 있지만 속도나 메모리적으로 불편함이 있다.
 // using Microsoft.Office.Interop.Excel;
@@ -16,40 +17,31 @@ namespace RPG_Game
 {
     public enum GAME_STATUS { }
     public enum ITEM_TYPE { Weapon = 0, SubWeapon, Halmet, Armor, Gloves, Boots, Ring, Amulet, Potion, Food, }
-    public enum SELECT_TYPE { Place = 0, Status, Inventory, Item, Quest, }
     internal class Program
     {
         static void Main(string[] args)
         {
-            Displayer displayer = new Displayer();
-            InventoryData inventory;
-            Dictionary<int, ISelectable> myData = new Dictionary<int, ISelectable>();
+            Dictionary<int, PlaceData> _placeDataDictionary = new Dictionary<int, PlaceData>();
+            // Dictionary<int, ItemData> _itemDataDictionary = new Dictionary<int, ItemData>();
 
-            SetSenario(ref myData);
+            InitData(ref _placeDataDictionary);
 
-            //while (true)
-            //{
-            //}
-
+            Displayer displayer = new Displayer(_placeDataDictionary[1001], _placeDataDictionary);
+            displayer.RefreshDisplay();
 
         }
-        static void SetSenario(ref Dictionary<int, ISelectable> data)
+        static void InitData(ref Dictionary<int, PlaceData> placeDatadictionary)
         {
-
+            // PlaceData 불러오기
             string projectFolder = AppDomain.CurrentDomain.BaseDirectory;
             string fileName = "PlaceData.xlsx";
-            string filePath = projectFolder + "..\\"+"..\\"+"..\\"+fileName;
+            string filePath = projectFolder + "..\\" + "..\\" + "..\\" + fileName;
 
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(filePath, false))
             {
                 WorkbookPart workbookPart = document.WorkbookPart;
                 WorksheetPart worksheetPart = workbookPart.WorksheetParts.FirstOrDefault();
-
-                if (worksheetPart == null)
-                {
-                    return; 
-                }
-
+                if (worksheetPart == null) return;
                 SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
 
                 bool isFirstRow = true;
@@ -57,19 +49,27 @@ namespace RPG_Game
                 {
                     if (!isFirstRow) // 첫 번째 행이 아닌 경우에만 처리
                     {
+                        List<string> rawData = new List<string>();
                         foreach (Cell cell in row.Elements<Cell>())
                         {
                             Console.Write(GetCellValue(cell, workbookPart) + "\t");
+                            rawData.Add(GetCellValue(cell, workbookPart));
                         }
                         Console.WriteLine();
+                        if (rawData.Count > 0)
+                        {
+                            string stringForSelections = rawData[3].Replace("{", "").Replace("}", "");
+                            int[] intForSelections = stringForSelections.Split(',').Select(int.Parse).ToArray();
+                            PlaceData newPlaceData = new PlaceData(rawData[0], rawData[1], rawData[2], intForSelections);
+
+                            placeDatadictionary.Add(int.Parse(rawData[0]),newPlaceData);
+                        }
                     }
                     isFirstRow = false; // 첫 번째 행 처리 후 더 이상 isFirstRow는 true가 아님
                 }
                 document.Dispose();
             }
         }
-
-
 
         private static string GetCellValue(Cell cell, WorkbookPart workbookPart)
         {
@@ -87,26 +87,10 @@ namespace RPG_Game
 
             return value;
         }
-        static int IsValidInput(int min, int max)
-        {
-            while (true)
-            {
-                Console.Write($"원하시는 행동의 번호를 입력해 주세요. : ");
-                string answer = Console.ReadLine();
-                bool isParseSuccess = int.TryParse(answer, out int result);
-                if (isParseSuccess)
-                {
-                    if (result >= min && result <= max) return result;
-                }
-            }
-        }
+
     }
 
-
-
-
-
-    class WorksheetWriter
+    public class WorksheetWriter
     {
         private WorksheetPart _worksheetPart;
         private SheetData _sheetData;
@@ -135,190 +119,119 @@ namespace RPG_Game
 
 
 
-
-}
-
-public interface ISelectable
-{
-    string Name { get; }
-    string Description { get; }
-    public SELECT_TYPE SelectType { get; }
-    public List<ISelectable> Selections { get; }
-    public void AddSelection(ISelectable selection)
+    public class Displayer
     {
-        Selections.Add(selection);
-    }
-}
-
-public class Displayer
-{
-    StringBuilder _title;
-    StringBuilder _description;
-    StringBuilder _selections;
-
-    public void RefreshDisplay()
-    {
-        // 콘솔창 지우기
-        Console.Clear();
-
-        // 콘솔에 스테이지 Title을 표시하기
-        Console.WriteLine("########################################");
-        Console.WriteLine($"          {_title}          ");
-        Console.WriteLine("########################################\n\n");
-
-        // 스테이지 설명이 있는 경우 출력.
-        if (_description != null)
+        PlaceData _currentPlaceData;
+        Dictionary<int, PlaceData> _placeDataDictionary;
+        public Displayer(PlaceData placeData, Dictionary<int, PlaceData> placeDataDicionary)
         {
-            Console.WriteLine(_description);
+            _currentPlaceData = placeData;
+            _placeDataDictionary = placeDataDicionary;
         }
-        else { Console.WriteLine("\n\t\t  ...\t\t\n"); }
-
-        // 선택지 출력
-        Console.WriteLine(_selections);
-        Console.WriteLine("\n\n");
-    }
-    public void UpdatePlaceData(PlaceData placeData)
-    {
-        // PlaceData가 들어오면 모든 정보 초기화 
-        _title.Clear();
-        _description.Clear();
-        _selections.Clear();
-
-        // 재설정
-        _title.Append(placeData.Name);
-        _description.Append(placeData.Description);
-        if (placeData.Selections.Count <= 0) return;
-        for (int i = 0; i < placeData.Selections.Count; i++)
+        public void RefreshDisplay()
         {
-            _selections.Append($"{i + 1} : ");
-            switch (placeData.Selections[i].SelectType)
+            // 콘솔창 지우기
+            Console.Clear();
+
+            // 콘솔에 스테이지 Title을 표시하기
+            Console.WriteLine("########################################");
+            Console.WriteLine($"          {_currentPlaceData.Name}          ");
+            Console.WriteLine("########################################\n\n");
+
+            // 스테이지 설명이 있는 경우 출력.
+            if (_currentPlaceData.Description != null)
             {
-                case SELECT_TYPE.Place:
-                    _selections.Append($"[{placeData.Selections[i].Name}](으)로 이동.");
-                    break;
+                Console.WriteLine(_currentPlaceData.Description);
+            }
+            else { Console.WriteLine("\n\t\t  ...\t\t\n"); }
 
-                // 퀘스트나 아이템의 경우 추가로 구현
+            // 선택지 출력
 
-                default:
-                    break;
+            for (int i = 0; i < _currentPlaceData.Selections.Length; i++)
+            {
+                Console.WriteLine($"{i + 1} : [{_placeDataDictionary[_currentPlaceData.Selections[i]].Name}](으)로 가기");
+            }
+            Console.WriteLine("\n\n");
+            int input = IsValidInput(1, _currentPlaceData.Selections.Length);
+            ChangePlace(_placeDataDictionary[_currentPlaceData.Selections[input - 1]]);
+        }
+        public void ChangePlace(PlaceData placeData)
+        {
+            _currentPlaceData = placeData;
+            RefreshDisplay();
+        }
+        static int IsValidInput(int min, int max)
+        {
+            while (true)
+            {
+                Console.Write($"원하시는 행동의 번호를 입력해 주세요. : ");
+                string answer = Console.ReadLine();
+                bool isParseSuccess = int.TryParse(answer, out int result);
+                if (isParseSuccess)
+                {
+                    if (result >= min && result <= max) return result;
+                }
             }
         }
-        RefreshDisplay();
     }
-    public void UpdateQuestData(QuestData QuestData)
+    public class PlaceData
     {
-        RefreshDisplay();
+        public int PlaceID { get; }
+        public string Name { get; }
+        public string Description { get; }
+        public int[] Selections { get; }
+        public PlaceData(string id, string name, string description, int[] selections)
+        {
+            PlaceID = int.Parse(id);
+            Name = name;
+            Description = description;
+            Selections = selections;
+        }
     }
-}
-public class PlaceData : ISelectable
-{
-    public int PlaceID { get; }
-    public string Name { get; }
-    public string Description { get; }
-    public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Place;
-    public List<ISelectable> Selections { get; }
-    public PlaceData(string id, string name, string description)
+    public class QuestData
     {
-        PlaceID = int.Parse(id);
-        Name = name;
-        Description = description;
-        Selections = new List<ISelectable>();
+        public int QuestID { get; }
+        public string Name { get; }
+        public string Description { get; }
+        public int[] Selections { get; }
+        public QuestData(string id, string name, string description)
+        {
+            QuestID = int.Parse(id);
+            Name = name;
+            Description = description;
+        }
     }
-    public void AddSelection(ISelectable selection)
+    public class InventoryData
     {
-        Selections.Add(selection);
     }
-}
-public class QuestData
-{
-    public string Name { get; }
-    public string Description { get; }
-    public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Quest;
-    public List<ISelectable> Selections { get; }
-    public QuestData(String name, string description)
+    public class StatusData
     {
-        Name = name;
-        Description = description;
-        Selections = new List<ISelectable>();
-    }
-    public void AddSelection(ISelectable selection)
-    {
-        Selections.Add(selection);
-    }
-}
-public class InventoryData : ISelectable
-{
-    public string Name { get; }
-    public string Description { get; }
-    public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Inventory;
-    public List<ISelectable> Selections { get; }
-    public InventoryData(String name, string description)
-    {
-        Name = name;
-        Description = description;
-        Selections = new List<ISelectable>();
-    }
-    public void AddSelection(ISelectable selection)
-    {
-        Selections.Add(selection);
-    }
-}
-public class StatusData
-{
-    public string Name { get; }
-    public string Description { get; }
-    public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Status;
-    public List<ISelectable> Selections { get; }
-    public StatusData(String name, string description)
-    {
-        Name = name;
-        Description = description;
-        Selections = new List<ISelectable>();
-    }
-    public void AddSelection(ISelectable selection)
-    {
-        Selections.Add(selection);
-    }
-}
-public class ItemData : ISelectable
-{
-    public string Name { get; }
-    public string Description { get; }
-    public SELECT_TYPE SelectType { get; } = SELECT_TYPE.Item;
-    public List<ISelectable> Selections { get; }
-    public ItemData(String name, string description)
-    {
-        Name = name;
-        Description = description;
-        Selections = new List<ISelectable>();
-    }
-    public void AddSelection(ISelectable selection)
-    {
-        Selections.Add(selection);
-    }
-}
 
-
-public class Character
-{
-    public string Name { get; }
-    public string Job { get; }
-    public int Level { get; }
-    public int Atk { get; }
-    public int Def { get; }
-    public int MaxHp { get; }
-    public int CurHp { get; }
-    public int Gold { get; }
-
-    public Character(string name, string job, int level, int atk, int def, int maxhp, int gold)
+    }
+    public class ItemData
     {
-        Name = name;
-        Job = job;
-        Level = level;
-        Atk = atk;
-        Def = def;
-        MaxHp = maxhp;
-        CurHp = maxhp;
-        Gold = gold;
+    }
+    public class Character
+    {
+        public string Name { get; }
+        public string Job { get; }
+        public int Level { get; }
+        public int Atk { get; }
+        public int Def { get; }
+        public int MaxHp { get; }
+        public int CurHp { get; }
+        public int Gold { get; }
+
+        public Character(string name, string job, int level, int atk, int def, int maxhp, int gold)
+        {
+            Name = name;
+            Job = job;
+            Level = level;
+            Atk = atk;
+            Def = def;
+            MaxHp = maxhp;
+            CurHp = maxhp;
+            Gold = gold;
+        }
     }
 }
