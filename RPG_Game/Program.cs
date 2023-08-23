@@ -30,7 +30,7 @@ namespace RPG_Game
 
             InitData(ref _placeDataDictionary, ref _characterDataDictionary);
             Character mainCharacter = new Character(_characterDataDictionary[1001]);
-            Displayer displayer = new Displayer(_placeDataDictionary[1001], _placeDataDictionary);
+            Displayer displayer = new Displayer(_placeDataDictionary[1003], _placeDataDictionary);
             nextInput = displayer.RefreshDisplay();
 
             while (!isGameOver)
@@ -205,6 +205,13 @@ namespace RPG_Game
             for (int i = 0; i < _currentPlaceData.Selections.Length; i++)
             {
                 Console.WriteLine($"{i + 1} : [{_placeDataDictionary[_currentPlaceData.Selections[i]].Name}](으)로 가기");
+
+                // 종류가 다른 선택지 사이에는 1줄 공간을 띄워서 보기 쉽게 설정
+                if ((i + 1) < _currentPlaceData.Selections.Length)
+                {
+                    if (_currentPlaceData.Selections[i] - _currentPlaceData.Selections[i + 1] > 5000)
+                    { Console.WriteLine(); }
+                }
             }
             Console.WriteLine("\n\n");
             int input = IsValidInput(1, _currentPlaceData.Selections.Length);
@@ -234,6 +241,13 @@ namespace RPG_Game
                     for (int i = 0; i < _currentPlaceData.Selections.Length; i++)
                     {
                         Console.WriteLine($"{i + 1} : [{_placeDataDictionary[_currentPlaceData.Selections[i]].Name}](으)로 가기");
+
+                        // 종류가 다른 선택지 사이에는 1줄 공간을 띄워서 보기 쉽게 설정
+                        if ((i + 1) < _currentPlaceData.Selections.Length)
+                        {
+                            if (_currentPlaceData.Selections[i] - _currentPlaceData.Selections[i + 1] > 5000)
+                            { Console.WriteLine(); }
+                        }
                     }
                     Console.WriteLine("\n\n");
                     int input = IsValidInput(1, _currentPlaceData.Selections.Length);
