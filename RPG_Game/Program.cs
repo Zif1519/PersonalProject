@@ -26,9 +26,9 @@ namespace RPG_Game
             bool isGameOver = false;
             Dictionary<int, PlaceData> _placeDataDictionary = new Dictionary<int, PlaceData>();
             Dictionary<int, CharacterData> _characterDataDictionary = new Dictionary<int, CharacterData>();
-            // Dictionary<int, ItemData> _itemDataDictionary = new Dictionary<int, ItemData>();
+            Dictionary<int, ItemData> _itemDataDictionary = new Dictionary<int, ItemData>();
 
-            InitData(ref _placeDataDictionary, ref _characterDataDictionary);
+            InitData(ref _placeDataDictionary, ref _characterDataDictionary, ref _itemDataDictionary);
             Character mainCharacter = new Character(_characterDataDictionary[1001]);
             Displayer displayer = new Displayer(_placeDataDictionary[1003], _placeDataDictionary);
             nextInput = displayer.RefreshDisplay();
@@ -53,7 +53,8 @@ namespace RPG_Game
             }
 
         }
-        static void InitData(ref Dictionary<int, PlaceData> placeDataDictionary, ref Dictionary<int, CharacterData> characterDataDictionary)
+        static void InitData(ref Dictionary<int, PlaceData> placeDataDictionary, ref Dictionary<int, CharacterData> characterDataDictionary,
+                             ref Dictionary<int, ItemData> itemDataDictionary)
         {
             // PlaceData 불러오기
             string projectFolder = AppDomain.CurrentDomain.BaseDirectory;
@@ -127,6 +128,38 @@ namespace RPG_Game
                 document.Dispose();
             }
 
+            // ItemData 불러오기
+            string itemDataFileName = "ItemData.xlsx";
+            string itemDataFilePath = projectFolder + "..\\" + "..\\" + "..\\" + itemDataFileName;
+            using (SpreadsheetDocument document = SpreadsheetDocument.Open(itemDataFilePath, false))
+            {
+                WorkbookPart workbookPart = document.WorkbookPart;
+                WorksheetPart worksheetPart = workbookPart.WorksheetParts.FirstOrDefault();
+                if (worksheetPart == null) return;
+                SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
+
+                bool isFirstRow = true;
+                foreach (Row row in sheetData.Elements<Row>())
+                {
+                    if (!isFirstRow) // 첫 번째 행이 아닌 경우에만 처리
+                    {
+                        List<string> rawData = new List<string>();
+                        foreach (Cell cell in row.Elements<Cell>())
+                        {
+                            Console.Write(GetCellValue(cell, workbookPart) + "\t");
+                            rawData.Add(GetCellValue(cell, workbookPart));
+                        }
+                        Console.WriteLine();
+                        if (rawData.Count > 0)
+                        {
+                            ItemData newItemData = new ItemData(rawData[0], rawData[1], rawData[2], rawData[3]);
+                            itemDataDictionary.Add(int.Parse(rawData[0]), newItemData);
+                        }
+                    }
+                    isFirstRow = false; // 첫 번째 행 처리 후 더 이상 isFirstRow는 true가 아님
+                }
+                document.Dispose();
+            }
         }
         static string GetCellValue(Cell cell, WorkbookPart workbookPart)
         {
@@ -289,38 +322,36 @@ namespace RPG_Game
             Selections = selections;
         }
     }
-    public class QuestData
-    {
-        public int QuestID { get; }
-        public string Name { get; }
-        public string Description { get; }
-        public int[] Selections { get; }
-        public QuestData(string id, string name, string description)
-        {
-            QuestID = int.Parse(id);
-            Name = name;
-            Description = description;
-        }
-    }
+    // public class QuestData {}
     public class InventoryData
     {
+        
     }
-
     public class ItemData
     {
-        int ItemID { get; }
-        string Name { get; }
-        string Description { get; }
+        public int ItemID { get; }
+        public string Name { get; }
+        public string Description { get; }
+        public string Effect { get; }
 
-
+        public ItemData(string itemID, string name, string description, string effect)
+        {
+            ItemID = int.Parse(itemID);
+            Name = name;
+            Description = description;
+            Effect = effect;
+        }
     }
-    public struct Item
+    public struct Slot
     {
-
-    }
-    public struct Status
-    {
-
+        ItemData _itemData;
+        public int Quantity { get; }
+        
+        public Slot()
+        {
+            _itemData = null;
+            Quantity = 0;
+        }
     }
     public class CharacterData
     {
@@ -353,11 +384,9 @@ namespace RPG_Game
 
         CharacterData _characterData;
         // InventoryData _inventoryData;
-
         public Character(CharacterData characterData)
         {
             _characterData = characterData;
-            // _inventoryData = inventoryData;
         }
         public void ShowStatus()
         {
